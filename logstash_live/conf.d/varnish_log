@@ -1,0 +1,70 @@
+input {
+    file {
+        type         => "varnish_log"
+        path         => [ "/var/log/varnish/varnishncsa.log"]
+    }	
+}
+
+filter {
+    if [type] == "varnish_log" {
+        grok {
+            patterns_dir    => ["/etc/logstash/patterns.d"]
+
+            match           => [ "message", "%{IPORHOST:hostname} %{IP:client_ip} - - \[%{MONTHDAY:day_log:int}/%{MONTH:month_log}/%{YEAR:year_log:int}:%{TIME:time_log} %{ISO8601_TIMEZONE:time_zone}\] \"%{WORD:method} %{URI:url}(?: HTTP/%{NUMBER:httpversion:int})\" %{NUMBER:response:int} \"%{URIOREMPTY:referer}\" \"%{GREEDYDATA:user_agent}\" %{NUMBER:request_time:float} %{NUMBER:bytes_sent_client:float} %{WORD:hitmiss} %{XFORWARDFOR:http_x_forwarded_for}" ]
+        }
+        if "_grokparsefailure" in [tags] {
+            drop { }
+        }
+    }
+    
+    if [type] == "varnish_log" {
+        useragent {
+             source         => "user_agent"
+        }
+        geoip{
+             source         => "client_ip"
+        }
+        mutate{
+            add_field       => {
+                "timestamp_test_1"  => "%{day_log}-%{month_log}-%{year_log} %{time_log} %{time_zone}"
+            }
+            convert         => {
+                                "content_id" => "integer"
+                                "bitrate" => "integer"
+                               }
+        }
+        date {
+            timezone        => "Asia/Ho_Chi_Minh"
+            match           => [ "timestamp_test_1", "dd-MMM-yyyy HH:mm:ss Z" ]
+            target          => "time_write_log"
+            remove_field    => "timestamp_test_1"
+        }
+        isp{
+            database       => "/etc/logstash/database/VegaGeoISP"
+            ip             => "client_ip"
+        }
+    }
+    date {
+        timezone        => "Asia/Ho_Chi_Minh"
+        match           => [ "timestamp", "dd-MMM-yyyy HH:mm:ss Z" ]
+    }
+    mutate {
+        add_field       => {
+            "host_name"         => "fpt1-live-edge1"
+            "group_name"        => "fpt1"
+        }
+    }
+    
+
+}
+
+output {
+    if [type] == "varnish_log" {
+        elasticsearch {
+            hosts           => ["103.216.122.101:9200"]
+            index           => "cdnlog-%{+YYYY.MM.dd}"
+        }
+#        stdout { codec => rubydebug }
+    }
+}
+

@@ -1,0 +1,1 @@
+DAEMON_OPTS="$DAEMON_OPTS -F '%{Host}i %h %l %u %t \"%r\" %s \"%{Referer}i\" \"%{User-agent}i\" %D %O %{Varnish:hitmiss}x %{X-USER-IP}i'"
