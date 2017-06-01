@@ -1,0 +1,7 @@
+VOD_DRM_URIPATH (?:/[A-Za-z0-9$.+!*'(){},~:;=@#%_\-]*)+%{POSINT:content_id:int}(?:(.*%{AVTYPE:avtype}.*)br)?(%{INT:bitrate:int})?(?:.*)?\.%{FILETYPE:filetype}
+VOD_NOTDRM_URIPATH (?:/[A-Za-z0-9$.+!*'(){},~:;=@#%_\-]*)+%{POSINT:content_id:int}\.mp4(.*)\/(%{RTYPE:request_type})(%{INT:bitrate:int})?(_%{AVTYPE:avtype})?(?:.*)?\.%{FILETYPE:filetype}
+URIOREMPTY %{URI}|\-
+XFORWARDFOR (?:%{IPORHOST}|-)
+AVTYPE (audio|video|ao|vo)
+FILETYPE (ts|m4s|m3u8|mpd|aac)
+RTYPE (media_b|chunklist_b|playlist|chunk_)
